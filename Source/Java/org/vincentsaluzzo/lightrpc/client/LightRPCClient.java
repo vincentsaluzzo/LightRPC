@@ -185,8 +185,8 @@ public class LightRPCClient {
 	    	//the content are encrypted
 	    	if(this.configuration.getSecurityEncryptionType().equals(LightRPCConfig.SECURITY_ENCRYPTION_TYPE_BLOWFISH)) {
 	    		Blowfish blowfish = new Blowfish(this.configuration.getSecurityEncryptionPassphrase());
-	    		String responseEncrypted = content.getText();
-	    		String responseDecrypted = blowfish.decrypt(responseEncrypted.getBytes());
+	    		byte[] responseEncrypted = Blowfish.hexStringToByteArray(content.getText());
+	    		String responseDecrypted = blowfish.decrypt(responseEncrypted);
 	    		LightRPCResponse response = new LightRPCResponse(responseDecrypted);
 	    		return response;
 	    	} else {
@@ -196,7 +196,7 @@ public class LightRPCClient {
 	    	//the content are not encrypted
 	    	XMLOutputter sortie = new XMLOutputter(Format.getPrettyFormat());
 			StringWriter sw = new StringWriter();
-			sortie.output(new Document((Element) content.clone()), sw);
+			sortie.output(new Document((Element) content.getChild("response").clone()), sw);
 			LightRPCResponse response = new LightRPCResponse(sw.toString());
 			return response;
 	    }
@@ -220,14 +220,14 @@ public class LightRPCClient {
 	
 	public static void main(String[] args) throws IOException {
 		
-		LightRPCConfig c = new LightRPCConfig("http://google.com");
+		LightRPCConfig c = new LightRPCConfig("http://localhost:8080");
 		c.setSecurityEncryption(true);
 		c.setSecurityEncryptionType(LightRPCConfig.SECURITY_ENCRYPTION_TYPE_BLOWFISH);
 		c.setSecurityEncryptionPassphrase("pass");
 		LightRPCClient client = new LightRPCClient(c);
 		LightRPCRequest req = new LightRPCRequest("myRequest", new String[]{"param1", "param2"});
-		client.execute(req);
-		
+		LightRPCResponse rep = client.execute(req);
+		System.out.println(rep.getParameterList().get(0));
 	}
 	
 	

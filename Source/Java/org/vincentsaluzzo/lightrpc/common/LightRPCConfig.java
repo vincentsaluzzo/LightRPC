@@ -18,14 +18,10 @@ public class LightRPCConfig {
 	static public String SECURITY_ENCRYPTION_TYPE_BLOWFISH = "Blowfish";
 
 	/**
-	 * the address (URL) of the server without the port
+	 * the address (URL) of the server
 	 */
 	String address;
 	
-	/**
-	 * the port of the server
-	 */
-	String port;
 	
 	/**
 	 * define if the content are encrypted or not
@@ -37,16 +33,21 @@ public class LightRPCConfig {
 	 */
 	String securityEncryptionType;
 	
-	
+	/**
+	 * define the passphrase for the security encryption used in encryption/decryption process
+	 */
+	String securityEncryptionPassphrase;
 
 	/**
 	 * Construct a LightRPCConfig object with two parameters
-	 * @param pAddress the address of the server (URL) without the port number
-	 * @param pPort the port number of the server
+	 * @param pAddress the address of the server (URL) 
 	 */
-	public LightRPCConfig(String pAddress, String pPort) {
+	public LightRPCConfig(String pAddress) {
 		this.address = pAddress;
-		this.port = pPort;
+		
+		this.securityEncryption = false;
+		this.securityEncryptionType = "";
+		this.securityEncryptionPassphrase = "";
 	}
 	
 	/**
@@ -75,6 +76,27 @@ public class LightRPCConfig {
 	 */
 	public void setSecurityEncryptionType(String securityEncryptionType) {
 		this.securityEncryptionType = securityEncryptionType;
+	}
+
+	/**
+	 * @return the securityEncryptionPassphrase
+	 */
+	public String getSecurityEncryptionPassphrase() {
+		return securityEncryptionPassphrase;
+	}
+
+	/**
+	 * @param securityEncryptionPassphrase the securityEncryptionPassphrase to set
+	 */
+	public void setSecurityEncryptionPassphrase(String securityEncryptionPassphrase) {
+		this.securityEncryptionPassphrase = securityEncryptionPassphrase;
+	}
+
+	/**
+	 * @return the address
+	 */
+	public String getAddress() {
+		return address;
 	}
 	
 	

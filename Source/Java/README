@@ -1,3 +1,5 @@
 LightRPC Java Library use JDOM to parse and serialize XML
+LightRPC Java Library use Jetty to create an embedded WebServer
 
 JDom website: http://www.jdom.org/
+Jetty website: http://jetty.codehaus.org/jetty/
