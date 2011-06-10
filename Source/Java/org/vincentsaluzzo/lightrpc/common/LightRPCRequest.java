@@ -27,16 +27,16 @@ public class LightRPCRequest {
 	/**
 	 * this object contains a list of parameter for the request
 	 */
-	private ArrayList<String> parameterList;
+	private ArrayList<Object> parameterList;
 
 	/**
 	 * Construct a LightRPCRequest with two parameter 
 	 * @param pMethod the name of the method
-	 * @param pParameter the list of the parameter (if null, the list is initialize to empty)
+	 * @param pParameter a list of string for parameter (if null, the list is initialize to empty)
 	 */
 	public LightRPCRequest(String pMethod, String[] pParameter) {
 		this.methodName = pMethod;
-		this.parameterList = new ArrayList<String>();
+		this.parameterList = new ArrayList<Object>();
 		if(pParameter != null) {
 			for(int i = 0; i < pParameter.length; i++) {
 				this.parameterList.add(pParameter[i]);
@@ -47,14 +47,14 @@ public class LightRPCRequest {
 	/**
 	 * Construct a LightRPCRequest with two parameter
 	 * @param pMethod the name of the method
-	 * @param pParameter the list of the parameter (if null, the list is initialize to empty)
+	 * @param pParameter the list of parameter (if null, the list is initialize to empty)
 	 */
-	public LightRPCRequest(String pMethod, ArrayList<String> pParameter) {
+	public LightRPCRequest(String pMethod, ArrayList<Object> pParameter) {
 		this.methodName = pMethod;
 		if(pParameter != null) {
 			this.parameterList = pParameter;
 		} else {
-			this.parameterList = new ArrayList<String>();
+			this.parameterList = new ArrayList<Object>();
 		}
 	}
 	
@@ -89,14 +89,48 @@ public class LightRPCRequest {
     	if(paramaterList == null) {
     		throw new LightRPCException("No 'parameter' element found in the XML");
     	}
-    	List param = paramaterList.getChildren("param");
-    	this.parameterList = new ArrayList<String>();
+    	List param = paramaterList.getChildren();
+    	this.parameterList = new ArrayList<Object>();
     	for(int i = 0; i < param.size(); i++) {
     		if(param.get(i).getClass() == Element.class) {
     			Element e = (Element)param.get(i);
-        		this.parameterList.add(e.getText());
+    			this.parameterList.add(this.parseXMLForParameter(e));
     		}
     	}
+	}
+	
+	private Object parseXMLForParameter(Element pE) {
+		if(pE.getName().equals("array")) {
+			List param = pE.getChildren();
+			ArrayList<Object> array = new ArrayList<Object>();
+			for(int i = 0; i < param.size(); i++) {
+				if(param.get(i).getClass() == Element.class) {
+					array.add(this.parseXMLForParameter((Element)param.get(i)));
+				}
+			}
+			return array;
+		} else if(pE.getName().equals("string")) {
+			return pE.getText();
+		} else {
+			return null;
+		}
+	}
+	
+	private Element parseParameterForXML(Object pE) {
+		if(pE.getClass() == ArrayList.class) {
+			Element array = new Element("array");
+			ArrayList<Object> arraylist = (ArrayList)pE;
+			for(int i = 0; i < arraylist.size(); i++) {
+				array.addContent(this.parseParameterForXML(arraylist.get(i)));
+			}
+			return array;
+		} else if(pE.getClass() == String.class) {
+			Element param = new Element("string");
+			param.setText((String)pE);
+			return param;
+		} else {
+			return null;
+		}
 	}
 
 	/**
@@ -119,7 +153,7 @@ public class LightRPCRequest {
 	 * Setter of parameterList array object
 	 * @param parameterList the new array for the list of parameter
 	 */
-	public void setParameterList(ArrayList<String> parameterList) {
+	public void setParameterList(ArrayList<Object> parameterList) {
 		this.parameterList = parameterList;
 	}
 
@@ -127,7 +161,7 @@ public class LightRPCRequest {
 	 * Getter of parameterList array object
 	 * @return the value of parameterList array
 	 */
-	public ArrayList<String> getParameterList() {
+	public ArrayList<Object> getParameterList() {
 		return parameterList;
 	}
 	
@@ -149,9 +183,7 @@ public class LightRPCRequest {
 		racine.addContent(parameterList);
 		
 		for(int i = 0; i < this.parameterList.size(); i++) {
-			Element param = new Element("param");
-			param.setText(this.parameterList.get(i));
-			parameterList.addContent(param);
+			parameterList.addContent(this.parseParameterForXML(this.parameterList.get(i)));
 		}
 		
 		try {
@@ -171,8 +203,13 @@ public class LightRPCRequest {
 				"<request>" +
 				"<method>toto</method>" +
 				"<parameter>" +
-				"<param>titi</param>" +
-				"<param>tata</param>" +
+				"<string>titi</string>" +
+				"<string>tata</string>" +
+				"<array>" +
+				"<string>toto0</string>" +
+				"<string>toto1</string>" +
+				"<string>toto2</string>" +
+				"</array>" +
 				"</parameter>" +
 				"</request>");
 		

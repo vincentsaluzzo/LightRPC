@@ -27,7 +27,7 @@ public class LightRPCResponse {
 	/**
 	 * this object contains a list of parameter for the response
 	 */
-	private ArrayList<String> parameterList;
+	private ArrayList<Object> parameterList;
 	
 	private String type;
 	
@@ -35,12 +35,12 @@ public class LightRPCResponse {
 	 * Construct a LightRPCResponse with three parameter 
 	 * @param pMethod the name of the method
 	 * @param pType the type of the response 
-	 * @param pParameter the list of the parameter (if null, the list is initialize to empty)
+	 * @param pParameter a list of String for parameter (if null, the list is initialize to empty)
 	 */
 	public LightRPCResponse(String pMethod, String pType, String[] pParameter) {
 		this.methodName = pMethod;
 		this.type = pType;
-		this.parameterList = new ArrayList<String>();
+		this.parameterList = new ArrayList<Object>();
 		if(pParameter != null) {
 			for(int i = 0; i < pParameter.length; i++) {
 				this.parameterList.add(pParameter[i]);
@@ -54,13 +54,13 @@ public class LightRPCResponse {
 	 * @param pType the type of the response
 	 * @param pParameter the list of the parameter (if null, the list is initialize to empty)
 	 */
-	public LightRPCResponse(String pMethod, String pType, ArrayList<String> pParameter) {
+	public LightRPCResponse(String pMethod, String pType, ArrayList<Object> pParameter) {
 		this.methodName = pMethod;
 		this.type = pType;
 		if(pParameter != null) {
 			this.parameterList = pParameter;
 		} else {
-			this.parameterList = new ArrayList<String>();
+			this.parameterList = new ArrayList<Object>();
 		}
 	}
 	
@@ -102,14 +102,48 @@ public class LightRPCResponse {
     	if(paramaterList == null) {
     		throw new LightRPCException("No 'parameter' element found in the XML");
     	}
-    	List param = paramaterList.getChildren("param");
-    	this.parameterList = new ArrayList<String>();
+    	List param = paramaterList.getChildren();
+    	this.parameterList = new ArrayList<Object>();
     	for(int i = 0; i < param.size(); i++) {
     		if(param.get(i).getClass() == Element.class) {
     			Element e = (Element)param.get(i);
-        		this.parameterList.add(e.getText());
+    			this.parameterList.add(this.parseXMLForParameter(e));
     		}
     	}
+	}
+	
+	private Object parseXMLForParameter(Element pE) {
+		if(pE.getName().equals("array")) {
+			List param = pE.getChildren();
+			ArrayList<Object> array = new ArrayList<Object>();
+			for(int i = 0; i < param.size(); i++) {
+				if(param.get(i).getClass() == Element.class) {
+					array.add(this.parseXMLForParameter((Element)param.get(i)));
+				}
+			}
+			return array;
+		} else if(pE.getName().equals("string")) {
+			return pE.getText();
+		} else {
+			return null;
+		}
+	}
+	
+	private Element parseParameterForXML(Object pE) {
+		if(pE.getClass() == ArrayList.class) {
+			Element array = new Element("array");
+			ArrayList<Object> arraylist = (ArrayList)pE;
+			for(int i = 0; i < arraylist.size(); i++) {
+				array.addContent(this.parseParameterForXML(arraylist.get(i)));
+			}
+			return array;
+		} else if(pE.getClass() == String.class) {
+			Element param = new Element("string");
+			param.setText((String)pE);
+			return param;
+		} else {
+			return null;
+		}
 	}
 	
 	/**
@@ -132,7 +166,7 @@ public class LightRPCResponse {
 	 * Setter of parameterList array object
 	 * @param parameterList the new array for the list of parameter
 	 */
-	public void setParameterList(ArrayList<String> parameterList) {
+	public void setParameterList(ArrayList<Object> parameterList) {
 		this.parameterList = parameterList;
 	}
 
@@ -140,7 +174,7 @@ public class LightRPCResponse {
 	 * Getter of parameterList array object
 	 * @return the value of parameterList array
 	 */
-	public ArrayList<String> getParameterList() {
+	public ArrayList<Object> getParameterList() {
 		return parameterList;
 	}
 	
@@ -165,9 +199,7 @@ public class LightRPCResponse {
 		racine.addContent(parameterList);
 		
 		for(int i = 0; i < this.parameterList.size(); i++) {
-			Element param = new Element("param");
-			param.setText(this.parameterList.get(i));
-			parameterList.addContent(param);
+			parameterList.addContent(this.parseParameterForXML(this.parameterList.get(i)));
 		}
 		
 		try {

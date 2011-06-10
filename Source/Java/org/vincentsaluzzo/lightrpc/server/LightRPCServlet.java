@@ -9,10 +9,10 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.StringReader;
 import java.io.StringWriter;
-import java.lang.reflect.Method;
 import java.util.ArrayList;
 
 import javax.servlet.ServletException;
+import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
@@ -22,25 +22,18 @@ import org.jdom.input.SAXBuilder;
 import org.jdom.output.Format;
 import org.jdom.output.XMLOutputter;
 import org.mortbay.jetty.Request;
-import org.mortbay.jetty.Server;
-import org.mortbay.jetty.handler.AbstractHandler;
 import org.vincentsaluzzo.lightrpc.common.LightRPCConfig;
 import org.vincentsaluzzo.lightrpc.common.LightRPCException;
 import org.vincentsaluzzo.lightrpc.common.LightRPCRequest;
 import org.vincentsaluzzo.lightrpc.common.LightRPCResponse;
 import org.vincentsaluzzo.lightrpc.common.security.Blowfish;
 
-import sun.misc.IOUtils;
-
-
 /**
- * This abstract class must be overridden to use this. 
- * You should implement the doMethod abstract method to override this class.
- * The doMethod method contains all the method of the LightRPC Server.
- * It is a Jetty Handler can be use directly in a Embedded Jetty HTTP server.
  * @author vincentsaluzzo
+ *
  */
-public abstract class LightRPCHandler extends AbstractHandler {
+abstract public class LightRPCServlet extends HttpServlet {
+
 
 	/**
 	 * Configuration object for the server handler
@@ -51,47 +44,10 @@ public abstract class LightRPCHandler extends AbstractHandler {
 	 * Construct a LightRPCHandler with a configuration object
 	 * @param pConfiguration a LightRPC Configuration object
 	 */
-	public LightRPCHandler(LightRPCConfig pConfiguration) {
+	public LightRPCServlet(LightRPCConfig pConfiguration) {
 		this.configuration = pConfiguration;	
 	}
-
-	/* (non-Javadoc)
-	 * @see org.mortbay.jetty.Handler#handle(java.lang.String, javax.servlet.http.HttpServletRequest, javax.servlet.http.HttpServletResponse, int)
-	 */
-	@Override
-	final public void handle(String target, HttpServletRequest request,
-			HttpServletResponse response, int dispatch) throws IOException,
-			ServletException {
-		response.setContentType("text/html");
-        response.setStatus(HttpServletResponse.SC_OK);
-        
-        
-        String bodyRequest = getBodyOfRequest(request);
-		try {
-	        LightRPCRequest lightrpcRequest = buildRequest(bodyRequest, this.configuration);
-	        
-	        Object[] responseParameter = doMethod(lightrpcRequest.getMethodName(), lightrpcRequest.getParameterList());
-	        ArrayList<Object> paramResponse = new ArrayList<Object>();
-	        for(Object str : responseParameter) {
-	        	paramResponse.add(str);
-	        }
-	        LightRPCResponse lightrpcResponse = new LightRPCResponse(lightrpcRequest.getMethodName(), "GoodResponse", paramResponse);
-	        response.getWriter().println(buildResponse(lightrpcResponse, this.configuration));
-		} catch (Exception e) {
-			e.printStackTrace();
-			String responseStr;
-			try {
-				responseStr = buildResponse(new LightRPCResponse("", "Exception", new String[]{e.getMessage()}), this.configuration);
-				response.getWriter().println(responseStr);
-			} catch (Exception e1) {
-			}
-		}
-        
-	    
-        ((Request)request).setHandled(true);
-
-	}
-
+	
 	/**
 	 * This method is used to retrieve the body of a request
 	 * @param request the request to use
@@ -251,32 +207,41 @@ public abstract class LightRPCHandler extends AbstractHandler {
 	 * @return a list of parameter to return in a response to the client
 	 */
 	abstract public Object[] doMethod(String pName, ArrayList<Object> pParameter);
-	
-	public static void main(String[] args) throws Exception {
-		Server server = new Server(8080);
+
+
+	/* (non-Javadoc)
+	 * @see javax.servlet.http.HttpServlet#doPost(javax.servlet.http.HttpServletRequest, javax.servlet.http.HttpServletResponse)
+	 */
+	@Override
+	protected void doPost(HttpServletRequest req, HttpServletResponse resp)
+			throws ServletException, IOException {
+		// TODO Auto-generated method stub
+		super.doPost(req, resp);
 		
-		final class myHandler extends LightRPCHandler {
-			LightRPCConfig c;
-			public myHandler(LightRPCConfig c) {
-				super(c);
+		resp.setContentType("text/html");
+		resp.setStatus(HttpServletResponse.SC_OK);
+        
+        
+        String bodyRequest = getBodyOfRequest(req);
+		try {
+	        LightRPCRequest lightrpcRequest = buildRequest(bodyRequest, this.configuration);
+	        
+	        Object[] responseParameter = doMethod(lightrpcRequest.getMethodName(), lightrpcRequest.getParameterList());
+	        ArrayList<Object> paramResponse = new ArrayList<Object>();
+	        for(Object str : responseParameter) {
+	        	paramResponse.add(str);
+	        }
+	        LightRPCResponse lightrpcResponse = new LightRPCResponse(lightrpcRequest.getMethodName(), "GoodResponse", paramResponse);
+	        resp.getWriter().println(buildResponse(lightrpcResponse, this.configuration));
+		} catch (Exception e) {
+			e.printStackTrace();
+			String responseStr;
+			try {
+				responseStr = buildResponse(new LightRPCResponse("", "Exception", new String[]{e.getMessage()}), this.configuration);
+				resp.getWriter().println(responseStr);
+			} catch (Exception e1) {
 			}
-			
-			@Override
-			public Object[] doMethod(String pName, ArrayList<Object> pParameter) {
-				if(pName.equals("myRequest")) {
-					return new String[]{"toto"};
-				}
-				return null;
-			}
-			
-			
 		}
-		
-		LightRPCConfig c = new LightRPCConfig("http://localhost:8080");
-		c.setSecurityEncryption(true);
-		c.setSecurityEncryptionPassphrase("pass");
-		c.setSecurityEncryptionType(LightRPCConfig.SECURITY_ENCRYPTION_TYPE_BLOWFISH);
-		server.setHandler(new myHandler(c));
-		server.start();
 	}
+	
 }
