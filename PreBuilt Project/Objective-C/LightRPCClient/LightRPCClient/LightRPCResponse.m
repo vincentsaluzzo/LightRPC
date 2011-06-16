@@ -1,0 +1,137 @@
+//
+//  LightRPCResponse.m
+//  LightRPCClient
+//
+//  Created by Vincent Saluzzo on 10/06/11.
+//  Copyright 2011 Vincent Saluzzo. All rights reserved.
+//
+
+#import "LightRPCResponse.h"
+
+
+@implementation LightRPCResponse
+@synthesize methodName;
+@synthesize parameterList;
+@synthesize typeOfResponse;
+
+-(LightRPCResponse*) initWithMethodName:(NSString*)pMethodName andType:(NSString *)type andParameters:(id)param, ... {
+    self = [self init];
+	if (self != nil) {
+		id currentObject;
+        va_list argList;
+        parameterList = [[NSMutableArray alloc] init];
+        if (param)
+        {
+            [parameterList addObject:param];
+            va_start(argList, param);
+            while ((currentObject = va_arg(argList, id)) != nil) {
+                [parameterList addObject:currentObject];
+            }
+            va_end(argList);
+        }
+        
+        methodName = [pMethodName retain];
+        typeOfResponse = [type retain];
+	}
+	return self;
+}
+
+-(LightRPCResponse*) initWithXML:(NSString*)pXml {
+    self = [self init];
+	if (self != nil) {
+        TBXML* tbxml = [[TBXML tbxmlWithXMLString:pXml] retain];
+        
+        TBXMLElement* racine = [tbxml rootXMLElement];
+        
+        TBXMLElement* method = [TBXML childElementNamed:@"method" parentElement:racine];
+        
+        methodName = [TBXML textForElement:method];
+        
+        TBXMLElement* type = [TBXML childElementNamed:@"type" parentElement:racine];
+        
+        typeOfResponse = [TBXML textForElement:type];
+        
+        TBXMLElement* parameter = [TBXML childElementNamed:@"parameter" parentElement:racine];
+        
+        parameterList = [[NSMutableArray alloc] init];
+        TBXMLElement* param = parameter->firstChild;
+        while(param) {
+            id obj = [self parseXMLForParameter:param];
+            [self.parameterList addObject:obj];
+            param = param->nextSibling;
+        }
+        
+        [tbxml release];
+    }
+	return self;
+}
+
+-(id) parseXMLForParameter:(TBXMLElement*)pE {
+    NSString* name = [[NSString alloc] initWithUTF8String:pE->name];
+    if([name isEqualToString:@"string"]) {
+        NSString* value = [[NSString alloc] initWithUTF8String:pE->text];
+        [name release];
+        return value;
+    } else if([name isEqualToString:@"array"]) {
+        NSMutableArray* array = [[NSMutableArray alloc] init];
+        TBXMLElement* param = pE->firstChild;
+        while(param) {
+            [array addObject:[self parseXMLForParameter:param]];
+            param = param->nextSibling;
+        }
+        [name release];
+        return array;
+    } else {
+        [name release];
+        return nil;
+    }
+}
+
+-(NSString*) parseParameterForXML:(id)pE {
+    NSString* xml = [[NSString alloc] init];
+    if([pE isKindOfClass:[NSString class]]) {
+        //Cas de string
+        xml = [xml stringByAppendingString:@"<string>"];
+        xml = [xml stringByAppendingString:(NSString*)pE];
+        xml = [xml stringByAppendingString:@"</string>"];
+    } else if([pE isKindOfClass:[NSMutableArray class]]) {
+        //Cas de array
+        xml = [xml stringByAppendingString:@"<array>"];
+        
+        NSMutableArray* array = (NSMutableArray*)pE;
+        for(int i = 0; i < [array count]; i++) {
+            xml = [xml stringByAppendingString:[self parseParameterForXML:[array objectAtIndex:i]]];
+        }
+        xml = [xml stringByAppendingString:@"</array>"];
+    } else if([pE isKindOfClass:[NSArray class]]) {
+        //Cas de array
+        xml = [xml stringByAppendingString:@"<array>"];
+        
+        NSArray* array = (NSArray*)pE;
+        for(int i = 0; i < [array count]; i++) {
+            xml = [xml stringByAppendingString:[self parseParameterForXML:[array objectAtIndex:i]]];
+        }
+        xml = [xml stringByAppendingString:@"</array>"];
+    }
+    return xml;
+}
+
+-(NSString*) transformToXML {
+    NSString* xml = [[NSString alloc] init];
+    xml = [xml stringByAppendingString:@"<response>"];
+    xml = [xml stringByAppendingString:@"<method>"];
+    xml = [xml stringByAppendingString:methodName];
+    xml = [xml stringByAppendingString:@"</method>"];
+    xml = [xml stringByAppendingString:@"<type>"];
+    xml = [xml stringByAppendingString:methodName];
+    xml = [xml stringByAppendingString:@"</type>"];
+    xml = [xml stringByAppendingString:@"<parameter>"];
+    for(int i = 0; i < [parameterList count]; i++) {
+        xml = [xml stringByAppendingString:[self parseParameterForXML:[parameterList objectAtIndex:i]]];
+    }
+    xml = [xml stringByAppendingString:@"</parameter>"];
+    xml = [xml stringByAppendingString:@"</response>"];
+    return xml;
+}
+
+@end

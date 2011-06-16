@@ -1,0 +1,30 @@
+LightRPC Client is available both iOS and Mac OS X. 
+
+================== Dependencies =====================
+Objective-C LightRPC Client Library for MacOS X use 
+- SystemConfiguration.framework 
+- CoreServices.framework
+- Cocoa.framework 
+- libz.dylib
+- TBXML as XML Parser
+- ASIHttpRequest as Http request sender 
+
+Objective-C LightRPC Client Library for iOS use 
+- CoreGraphics.framework
+- Fundation.framework
+- UIKit.framewok
+- CFNetwork.framework
+- SystemConfiguration.framework
+- MobileCoreServices.framework
+- libz.dylib
+- TBXML as XML Parser
+- ASIHttpRequest as Http request sender 
+
+=================== Links ==========================
+
+TBXML website: http://www.tbxml.co.uk/TBXML/TBXML_Free.html
+ASIHttpRequest website: http://allseeing-i.com/ASIHTTPRequest/
+
+Cocoa, SystemConfiguration, CoreServices and libz are distributed with Apple XCode 4 and there are available with a Mac OS X Cocoa Application project.
+
+CoreGraphics, Fundation, UIKit, CFNetwork, SystemConfiguration, MobileCoreServices and libz are distributed with Apple XCode 4 and there are available with a iOS Application project.
