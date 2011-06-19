@@ -1,6 +1,3 @@
-/**
- * 
- */
 package org.vincentsaluzzo.lightrpc.server;
 
 import java.io.BufferedReader;
@@ -9,6 +6,10 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.StringReader;
 import java.io.StringWriter;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
+import java.lang.reflect.ParameterizedType;
+import java.lang.reflect.Type;
 import java.util.ArrayList;
 
 import javax.servlet.ServletException;
@@ -21,19 +22,15 @@ import org.jdom.Element;
 import org.jdom.input.SAXBuilder;
 import org.jdom.output.Format;
 import org.jdom.output.XMLOutputter;
-import org.mortbay.jetty.Request;
 import org.vincentsaluzzo.lightrpc.common.LightRPCConfig;
 import org.vincentsaluzzo.lightrpc.common.LightRPCException;
 import org.vincentsaluzzo.lightrpc.common.LightRPCRequest;
 import org.vincentsaluzzo.lightrpc.common.LightRPCResponse;
+import org.vincentsaluzzo.lightrpc.common.security.AES256;
 import org.vincentsaluzzo.lightrpc.common.security.Blowfish;
+import org.vincentsaluzzo.lightrpc.common.security.TripleDES;
 
-/**
- * @author vincentsaluzzo
- *
- */
-abstract public class LightRPCServlet extends HttpServlet {
-
+public class LightRPCServlet extends HttpServlet {
 
 	/**
 	 * Configuration object for the server handler
@@ -41,11 +38,205 @@ abstract public class LightRPCServlet extends HttpServlet {
 	LightRPCConfig configuration;
 	
 	/**
+	 * List of Object use at End Point of Web Services
+	 */
+	private ArrayList<Object> implementorList;
+	
+	/**
 	 * Construct a LightRPCHandler with a configuration object
 	 * @param pConfiguration a LightRPC Configuration object
+	 * @throws LightRPCException 
 	 */
-	public LightRPCServlet(LightRPCConfig pConfiguration) {
-		this.configuration = pConfiguration;	
+	public LightRPCServlet(LightRPCConfig pConfiguration, Object implementor) throws ClassNotFoundException, LightRPCException {
+		this.configuration = pConfiguration;
+		
+		this.implementorList = new ArrayList<Object>();
+		implementorList.add(implementor);
+		System.out.println(this.implementorList.get(0).getClass().getSimpleName());
+		Class classe = Class.forName(implementor.getClass().getName());
+		Method[] listOfMethodImplemented = classe.getDeclaredMethods();
+		
+		for(Method m : listOfMethodImplemented) {
+			if(m.getReturnType() != String.class && m.getReturnType() != String[].class && m.getReturnType() != void.class) {
+				if(m.getGenericReturnType() instanceof ParameterizedType) {
+					ParameterizedType type = (ParameterizedType) m.getGenericReturnType();
+				    if(!haveAvailableGenericType(type)) {
+				    	throw new LightRPCException("Bad Type implemented in LightRPC Server method: Only String or different type of String array are accepted");
+				    }
+				} else {
+					throw new LightRPCException("Bad Type implemented in LightRPC Server method: Only String or different type of String array are accepted");
+				}
+			}
+			
+			for(int i = 0; i < m.getParameterTypes().length; i++) {
+				if(m.getParameterTypes()[i] != String.class && m.getReturnType() != String[].class) {
+					if(m.getGenericParameterTypes()[i] instanceof ParameterizedType) {
+						ParameterizedType type = (ParameterizedType) m.getGenericParameterTypes()[i];
+						if(!haveAvailableGenericType(type)) {
+					    	throw new LightRPCException("Bad Type implemented in LightRPC Server method: Only String or different type of String array are accepted");
+					    }
+					} else {
+						throw new LightRPCException("Bad Type implemented in LightRPC Server method: Only String or different type of String array are accepted");
+					}
+				}
+			}
+		}
+	}
+	
+	/**
+	 * Construct a LightRPCHandler with a configuration object
+	 * @param pConfiguration a LightRPC Configuration object
+	 * @throws LightRPCException 
+	 */
+	public LightRPCServlet(LightRPCConfig pConfiguration, Object... implementor) throws ClassNotFoundException, LightRPCException {
+		this.configuration = pConfiguration;
+		
+		this.implementorList = new ArrayList<Object>();
+		for(Object o : implementor) {
+			implementorList.add(o);
+			
+			Class classe = Class.forName(implementor.getClass().getName());
+			Method[] listOfMethodImplemented = classe.getDeclaredMethods();
+			
+			for(Method m : listOfMethodImplemented) {
+				if(m.getReturnType() != String.class && m.getReturnType() != String[].class && m.getReturnType() != void.class) {
+					if(m.getGenericReturnType() instanceof ParameterizedType) {
+						ParameterizedType type = (ParameterizedType) m.getGenericReturnType();
+					    if(!haveAvailableGenericType(type)) {
+					    	throw new LightRPCException("Bad Type implemented in LightRPC Server method: Only String or different type of String array are accepted");
+					    }
+					} else {
+						throw new LightRPCException("Bad Type implemented in LightRPC Server method: Only String or different type of String array are accepted");
+					}
+				}
+				
+				for(int i = 0; i < m.getParameterTypes().length; i++) {
+					if(m.getParameterTypes()[i] != String.class && m.getReturnType() != String[].class) {
+						if(m.getGenericParameterTypes()[i] instanceof ParameterizedType) {
+							ParameterizedType type = (ParameterizedType) m.getGenericParameterTypes()[i];
+							if(!haveAvailableGenericType(type)) {
+						    	throw new LightRPCException("Bad Type implemented in LightRPC Server method: Only String or different type of String array are accepted");
+						    }
+						} else {
+							throw new LightRPCException("Bad Type implemented in LightRPC Server method: Only String or different type of String array are accepted");
+						}
+					}
+				}
+			}
+		}
+	}
+	
+	/**
+	 * Construct a LightRPCHandler with a configuration object
+	 * @param pConfiguration a LightRPC Configuration object
+	 * @throws LightRPCException 
+	 * @throws IllegalAccessException 
+	 * @throws InstantiationException 
+	 */
+	public LightRPCServlet(LightRPCConfig pConfiguration, Class implementor) throws ClassNotFoundException, LightRPCException, InstantiationException, IllegalAccessException {
+		this.configuration = pConfiguration;
+		
+		this.implementorList = new ArrayList<Object>();
+		implementorList.add(implementor.newInstance());
+		System.out.println(this.implementorList.get(0).getClass().getSimpleName());
+		Method[] listOfMethodImplemented = implementor.getDeclaredMethods();
+		
+		for(Method m : listOfMethodImplemented) {
+			if(m.getReturnType() != String.class && m.getReturnType() != String[].class && m.getReturnType() != void.class) {
+				if(m.getGenericReturnType() instanceof ParameterizedType) {
+					ParameterizedType type = (ParameterizedType) m.getGenericReturnType();
+				    if(!haveAvailableGenericType(type)) {
+				    	throw new LightRPCException("Bad Type implemented in LightRPC Server method: Only String or different type of String array are accepted");
+				    }
+				} else {
+					throw new LightRPCException("Bad Type implemented in LightRPC Server method: Only String or different type of String array are accepted");
+				}
+			}
+			
+			for(int i = 0; i < m.getParameterTypes().length; i++) {
+				if(m.getParameterTypes()[i] != String.class && m.getReturnType() != String[].class) {
+					if(m.getGenericParameterTypes()[i] instanceof ParameterizedType) {
+						ParameterizedType type = (ParameterizedType) m.getGenericParameterTypes()[i];
+						if(!haveAvailableGenericType(type)) {
+					    	throw new LightRPCException("Bad Type implemented in LightRPC Server method: Only String or different type of String array are accepted");
+					    }
+					} else {
+						throw new LightRPCException("Bad Type implemented in LightRPC Server method: Only String or different type of String array are accepted");
+					}
+				}
+			}
+		}
+	}
+	
+	/**
+	 * Construct a LightRPCHandler with a configuration object
+	 * @param pConfiguration a LightRPC Configuration object
+	 * @throws LightRPCException 
+	 * @throws IllegalAccessException 
+	 * @throws InstantiationException 
+	 */
+	public LightRPCServlet(LightRPCConfig pConfiguration, Class... implementor) throws ClassNotFoundException, LightRPCException, InstantiationException, IllegalAccessException {
+		this.configuration = pConfiguration;
+		
+		this.implementorList = new ArrayList<Object>();
+		for(Class o : implementor) {
+			implementorList.add(o.newInstance());
+			
+			Method[] listOfMethodImplemented = o.getDeclaredMethods();
+			
+			for(Method m : listOfMethodImplemented) {
+				if(m.getReturnType() != String.class && m.getReturnType() != String[].class && m.getReturnType() != void.class) {
+					if(m.getGenericReturnType() instanceof ParameterizedType) {
+						ParameterizedType type = (ParameterizedType) m.getGenericReturnType();
+					    if(!haveAvailableGenericType(type)) {
+					    	throw new LightRPCException("Bad Type implemented in LightRPC Server method: Only String or different type of String array are accepted");
+					    }
+					} else {
+						throw new LightRPCException("Bad Type implemented in LightRPC Server method: Only String or different type of String array are accepted");
+					}
+				}
+				
+				for(int i = 0; i < m.getParameterTypes().length; i++) {
+					if(m.getParameterTypes()[i] != String.class && m.getReturnType() != String[].class) {
+						if(m.getGenericParameterTypes()[i] instanceof ParameterizedType) {
+							ParameterizedType type = (ParameterizedType) m.getGenericParameterTypes()[i];
+							if(!haveAvailableGenericType(type)) {
+						    	throw new LightRPCException("Bad Type implemented in LightRPC Server method: Only String or different type of String array are accepted");
+						    }
+						} else {
+							throw new LightRPCException("Bad Type implemented in LightRPC Server method: Only String or different type of String array are accepted");
+						}
+					}
+				}
+			}
+		}
+	}
+	
+	
+	/**
+	 * Recusive method to determine if a type are available or not (search in deep)
+	 * @param pType type to analyse
+	 * @return true if the type are available
+	 */
+	private boolean haveAvailableGenericType(ParameterizedType pType) {
+		boolean ok = true;
+		Type[] typeArguments = pType.getActualTypeArguments();
+		for(Type typeArgument : typeArguments) {
+			if(typeArgument instanceof ParameterizedType) {
+	        	if(haveAvailableGenericType((ParameterizedType)typeArgument)) {
+	        	} else {
+	        		ok = false;
+	        	}
+	        } else {
+	        	Class typeArgClass = (Class) typeArgument;
+		        if(typeArgClass == String.class) {
+		        } else if(typeArgClass == String[].class) {
+		        } else {
+		        	ok = false;
+		        }
+	        }
+		}
+		return ok;
 	}
 	
 	/**
@@ -85,7 +276,6 @@ abstract public class LightRPCServlet extends HttpServlet {
 		return body;
 	}
 	
-	
 	/**
 	 * Build a serliazed response with a LightRPCResponse object and a configuration
 	 * @param pResponse the response object to use for serialization
@@ -112,6 +302,16 @@ abstract public class LightRPCServlet extends HttpServlet {
 				String reqSerialized = pResponse.getXML();
 				byte[] reqSerializedAndEncrypted = blowfish.crypt(reqSerialized);
 				content.setText(Blowfish.asHex(reqSerializedAndEncrypted));		
+			} else if(pConfiguration.getSecurityEncryptionType().equals(LightRPCConfig.SECURITY_ENCRYPTION_TYPE_3DES)) {
+				TripleDES aes = new TripleDES(pConfiguration.getSecurityEncryptionPassphrase());
+				String reqSerialized = pResponse.getXML();
+				byte[] reqSerializedAndEncrypted = aes.crypt(reqSerialized);
+				content.setText(TripleDES.asHex(reqSerializedAndEncrypted));		
+			}  else if(pConfiguration.getSecurityEncryptionType().equals(LightRPCConfig.SECURITY_ENCRYPTION_TYPE_AES256)) {
+				AES256 aes = new AES256(pConfiguration.getSecurityEncryptionPassphrase());
+				String reqSerialized = pResponse.getXML();
+				byte[] reqSerializedAndEncrypted = aes.crypt(reqSerialized);
+				content.setText(AES256.asHex(reqSerializedAndEncrypted));		
 			} else {
 				throw new LightRPCException("Bad Encryption algorithm");
 			}
@@ -186,6 +386,18 @@ abstract public class LightRPCServlet extends HttpServlet {
 	    		String responseDecrypted = blowfish.decrypt(responseEncrypted);
 	    		LightRPCRequest request = new LightRPCRequest(responseDecrypted);
 	    		return request;
+	    	} else if(pConfiguration.getSecurityEncryptionType().equals(LightRPCConfig.SECURITY_ENCRYPTION_TYPE_3DES)) {
+	    		TripleDES aes = new TripleDES(pConfiguration.getSecurityEncryptionPassphrase());
+	    		byte[] responseEncrypted = TripleDES.hexStringToByteArray(content.getText());
+	    		String responseDecrypted = aes.decrypt(responseEncrypted);
+	    		LightRPCRequest request = new LightRPCRequest(responseDecrypted);
+	    		return request;
+	    	} else if(pConfiguration.getSecurityEncryptionType().equals(LightRPCConfig.SECURITY_ENCRYPTION_TYPE_AES256)) {
+	    		AES256 aes = new AES256(pConfiguration.getSecurityEncryptionPassphrase());
+	    		byte[] responseEncrypted = AES256.hexStringToByteArray(content.getText());
+	    		String responseDecrypted = aes.decrypt(responseEncrypted);
+	    		LightRPCRequest request = new LightRPCRequest(responseDecrypted);
+	    		return request;
 	    	} else {
 	    		throw new LightRPCException("Bad Security encryption algorithm used");
 	    	}
@@ -205,8 +417,41 @@ abstract public class LightRPCServlet extends HttpServlet {
 	 * @param pName the method name send by the client
 	 * @param pParameter the list of parameter send by the client in the request
 	 * @return a list of parameter to return in a response to the client
+	 * @throws InvocationTargetException 
+	 * @throws IllegalAccessException 
+	 * @throws IllegalArgumentException 
 	 */
-	abstract public Object[] doMethod(String pName, ArrayList<Object> pParameter);
+	private Object doMethod(String pName, ArrayList<Object> pParameter) throws IllegalArgumentException, IllegalAccessException, InvocationTargetException {
+		String[] a = pName.split("\\.");
+		if(a.length <= 1) {
+			if(this.implementorList.size() == 1) {
+				Method[] listOfMethodImplemented = implementorList.get(0).getClass().getDeclaredMethods();
+				for(Method m : listOfMethodImplemented) {
+					if(m.getName().equals(pName)) {
+						return m.invoke(implementorList.get(0), pParameter.toArray());
+					}
+				}
+				return new LightRPCException("Bad method name");
+			} else {
+				return new LightRPCException("Bad method name");
+			}
+		} else {
+			String methodNameClass = a[0];
+			String methodName = a[1];
+			for(int i = 0; i < this.implementorList.size(); i++) {
+				if(methodNameClass.equals(this.implementorList.get(i).getClass().getSimpleName())) {
+					Method[] listOfMethodImplemented = implementorList.get(0).getClass().getDeclaredMethods();
+					for(Method m : listOfMethodImplemented) {
+						if(m.getName().equals(methodName)) {
+							return m.invoke(implementorList.get(0), pParameter.toArray());
+						}
+					}
+				}
+			}
+			return new LightRPCException("Bad method name");
+		}
+		
+	}
 
 
 	/* (non-Javadoc)
@@ -216,7 +461,7 @@ abstract public class LightRPCServlet extends HttpServlet {
 	protected void doPost(HttpServletRequest req, HttpServletResponse resp)
 			throws ServletException, IOException {
 		// TODO Auto-generated method stub
-		super.doPost(req, resp);
+		//super.doPost(req, resp);
 		
 		resp.setContentType("text/html");
 		resp.setStatus(HttpServletResponse.SC_OK);
@@ -225,13 +470,34 @@ abstract public class LightRPCServlet extends HttpServlet {
         String bodyRequest = getBodyOfRequest(req);
 		try {
 	        LightRPCRequest lightrpcRequest = buildRequest(bodyRequest, this.configuration);
+	        LightRPCResponse lightrpcResponse = null;
+	        Object responseParameter = doMethod(lightrpcRequest.getMethodName(), lightrpcRequest.getParameterList());
+	        if(responseParameter != null) {
+	        	if(responseParameter.getClass() == Object[].class) {
 	        
-	        Object[] responseParameter = doMethod(lightrpcRequest.getMethodName(), lightrpcRequest.getParameterList());
-	        ArrayList<Object> paramResponse = new ArrayList<Object>();
-	        for(Object str : responseParameter) {
-	        	paramResponse.add(str);
+		        	ArrayList<Object> paramResponse = new ArrayList<Object>();
+		        	Object[] o = (Object[]) responseParameter;
+		        	for(Object oo : o) {
+		        		paramResponse.add(oo);
+		        	}
+		        	lightrpcResponse = new LightRPCResponse(lightrpcRequest.getMethodName(), "GoodResponse", paramResponse);
+		        } else if(responseParameter.getClass() == String[].class) {
+		        	lightrpcResponse = new LightRPCResponse(lightrpcRequest.getMethodName(), "GoodResponse", (String[])responseParameter);
+		        } else if(responseParameter.getClass() == String.class) {
+		        	ArrayList<Object> paramResponse = new ArrayList<Object>();
+		        	lightrpcResponse = new LightRPCResponse(lightrpcRequest.getMethodName(), "GoodResponse", new String[]{(String) responseParameter});
+		        } else if(responseParameter.getClass() == ArrayList.class) {
+		        	ArrayList<Object> paramResponse = (ArrayList<Object>) responseParameter;
+		        	lightrpcResponse = new LightRPCResponse(lightrpcRequest.getMethodName(), "GoodResponse", paramResponse);
+		        } else if(responseParameter.getClass() == LightRPCException.class) {
+		        	lightrpcResponse = new LightRPCResponse(lightrpcRequest.getMethodName(), "Exception", new String[]{"This method doesn't exist"});
+	        	} else {
+		        	lightrpcResponse = new LightRPCResponse(lightrpcRequest.getMethodName(), "Exception", new String[]{"the remode method return a non serializable object"});
+		        }
+	        } else {
+	        	lightrpcResponse = new LightRPCResponse(lightrpcRequest.getMethodName(), "GoodResponse", new ArrayList<Object>());
 	        }
-	        LightRPCResponse lightrpcResponse = new LightRPCResponse(lightrpcRequest.getMethodName(), "GoodResponse", paramResponse);
+	        
 	        resp.getWriter().println(buildResponse(lightrpcResponse, this.configuration));
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -244,4 +510,82 @@ abstract public class LightRPCServlet extends HttpServlet {
 		}
 	}
 	
+	public static void main(String[] args) throws Exception {
+		/*
+		final class test {
+			
+			public void sayHello() {
+				System.err.println("Hello");
+			}
+			
+			public String getHello() {
+				return "Hello";
+			}
+			
+			public void say(final String pString) {
+				System.out.println(pString);
+			}
+			
+			public String[] getHelloHello() {
+				return new String[]{"Hello", "Hello"};
+			}
+			
+			public ArrayList<String> getArrayListHello() {
+				ArrayList<String> t = new ArrayList<String>();
+				for(int i = 0 ; i< 10; i++) {
+					t.add("Hello"+i);
+				}
+				return t;
+			}
+			
+			public ArrayList<ArrayList<String>> getArrayListOfArrayListHello() {
+				ArrayList<ArrayList<String>> T = new ArrayList<ArrayList<String>>();
+				ArrayList<String> t1 = new ArrayList<String>();
+				for(int i = 0 ; i< 10; i++) {
+					t1.add("Hello"+i);
+				}
+				
+				ArrayList<String> t2 = new ArrayList<String>();
+				for(int i = 0 ; i< 10; i++) {
+					t2.add("Hello"+i);
+				}
+				
+				ArrayList<String> t3 = new ArrayList<String>();
+				for(int i = 0 ; i< 10; i++) {
+					t3.add("Hello"+i);
+				}
+				T.add(t1);
+				T.add(t2);
+				T.add(t3);
+				return T;
+			}
+		}
+		
+		final class truc {
+			
+			public void sayHello() {
+				System.err.println("Hello");
+			}
+			
+			public ArrayList<String> getArrayListHello() {
+				ArrayList<String> t = new ArrayList<String>();
+				for(int i = 0 ; i< 10; i++) {
+					t.add("Hello"+i);
+				}
+				return t;
+			}
+		}
+		
+		LightRPCConfig c = new LightRPCConfig("http://localhost:8080");
+		c.addAESSecurityEncryption("passpasspasspass");
+		
+		test t = new test();
+		truc t2 = new truc();
+		LightRPCServlet a = new LightRPCServlet(c, test.class, truc.class);
+		
+		Server server = new Server(8080);
+		Context root = new Context(server,"/",Context.SESSIONS);
+		root.addServlet(new ServletHolder(a), "/*");
+		server.start();*/
+	}
 }

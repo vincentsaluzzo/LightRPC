@@ -28,6 +28,8 @@ import org.vincentsaluzzo.lightrpc.common.LightRPCConfig;
 import org.vincentsaluzzo.lightrpc.common.LightRPCException;
 import org.vincentsaluzzo.lightrpc.common.LightRPCRequest;
 import org.vincentsaluzzo.lightrpc.common.LightRPCResponse;
+import org.vincentsaluzzo.lightrpc.common.security.AES256;
+import org.vincentsaluzzo.lightrpc.common.security.TripleDES;
 import org.vincentsaluzzo.lightrpc.common.security.Blowfish;
 
 import sun.misc.IOUtils;
@@ -156,6 +158,16 @@ public abstract class LightRPCHandler extends AbstractHandler {
 				String reqSerialized = pResponse.getXML();
 				byte[] reqSerializedAndEncrypted = blowfish.crypt(reqSerialized);
 				content.setText(Blowfish.asHex(reqSerializedAndEncrypted));		
+			} else if(pConfiguration.getSecurityEncryptionType().equals(LightRPCConfig.SECURITY_ENCRYPTION_TYPE_3DES)) {
+				TripleDES aes = new TripleDES(pConfiguration.getSecurityEncryptionPassphrase());
+				String reqSerialized = pResponse.getXML();
+				byte[] reqSerializedAndEncrypted = aes.crypt(reqSerialized);
+				content.setText(TripleDES.asHex(reqSerializedAndEncrypted));		
+			} else if(pConfiguration.getSecurityEncryptionType().equals(LightRPCConfig.SECURITY_ENCRYPTION_TYPE_AES256)) {
+				AES256 aes = new AES256(pConfiguration.getSecurityEncryptionPassphrase());
+				String reqSerialized = pResponse.getXML();
+				byte[] reqSerializedAndEncrypted = aes.crypt(reqSerialized);
+				content.setText(AES256.asHex(reqSerializedAndEncrypted));		
 			} else {
 				throw new LightRPCException("Bad Encryption algorithm");
 			}
@@ -230,6 +242,20 @@ public abstract class LightRPCHandler extends AbstractHandler {
 	    		String responseDecrypted = blowfish.decrypt(responseEncrypted);
 	    		LightRPCRequest request = new LightRPCRequest(responseDecrypted);
 	    		return request;
+	    	} else if(pConfiguration.getSecurityEncryptionType().equals(LightRPCConfig.SECURITY_ENCRYPTION_TYPE_3DES)) {
+	    		TripleDES aes = new TripleDES(pConfiguration.getSecurityEncryptionPassphrase());
+	    		System.out.println("Content recu: "+content.getText());
+	    		byte[] responseEncrypted = TripleDES.hexStringToByteArray(content.getText());
+	    		String responseDecrypted = aes.decrypt(responseEncrypted);
+	    		LightRPCRequest request = new LightRPCRequest(responseDecrypted);
+	    		return request;
+	    	} else if(pConfiguration.getSecurityEncryptionType().equals(LightRPCConfig.SECURITY_ENCRYPTION_TYPE_AES256)) {
+	    		AES256 aes = new AES256(pConfiguration.getSecurityEncryptionPassphrase());
+	    		System.out.println("Content recu: "+content.getText());
+	    		byte[] responseEncrypted = AES256.hexStringToByteArray(content.getText());
+	    		String responseDecrypted = aes.decrypt(responseEncrypted);
+	    		LightRPCRequest request = new LightRPCRequest(responseDecrypted);
+	    		return request;
 	    	} else {
 	    		throw new LightRPCException("Bad Security encryption algorithm used");
 	    	}
@@ -264,7 +290,10 @@ public abstract class LightRPCHandler extends AbstractHandler {
 			@Override
 			public Object[] doMethod(String pName, ArrayList<Object> pParameter) {
 				if(pName.equals("myRequest")) {
-					return new String[]{"toto"};
+					ArrayList<String> str = new ArrayList<String>();
+					str.add("kiki");
+					str.add("pipi");
+					return new Object[]{"toto", "kaka", str};
 				}
 				return null;
 			}
@@ -273,9 +302,9 @@ public abstract class LightRPCHandler extends AbstractHandler {
 		}
 		
 		LightRPCConfig c = new LightRPCConfig("http://localhost:8080");
-		c.setSecurityEncryption(true);
-		c.setSecurityEncryptionPassphrase("pass");
-		c.setSecurityEncryptionType(LightRPCConfig.SECURITY_ENCRYPTION_TYPE_BLOWFISH);
+		//c.setSecurityEncryptionPassphrase("123456789ABCDEFGHIJKLMNO");
+		
+		c.addAESSecurityEncryption("passpasspasspass");
 		server.setHandler(new myHandler(c));
 		server.start();
 	}
