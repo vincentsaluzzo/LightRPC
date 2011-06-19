@@ -1,10 +1,7 @@
 package org.vincentsaluzzo.lightrpc.common.security;
 
-import java.security.*;
-
 import javax.crypto.*;
 import javax.crypto.spec.*;
-import java.io.*;
 
 /**
 * This class provides crypt/decrypt method to encrypt and decrypt a string with a passphrase.
@@ -32,17 +29,17 @@ public class AES256 {
 	 */
 	public byte[] crypt(String pStringToCrypt) throws Exception{
 		
-		String message=pStringToCrypt;
+		//String message=pStringToCrypt;
 
 
 	    KeyGenerator kgen = KeyGenerator.getInstance("AES");
 	    kgen.init(128); // 192 and 256 bits may not be available
 
 	    // Generate the secret key specs.
-	    SecretKey skey = kgen.generateKey();
-	    byte[] raw = skey.getEncoded();
+	    //SecretKey skey = kgen.generateKey();
+	    //byte[] raw = skey.getEncoded();
 
-	    String key = new String(raw);
+	    //String key = new String(raw);
 	    //System.out.println("Key use: " + key + " - Hex: " + asHex(raw));
 	    SecretKeySpec skeySpec = new SecretKeySpec(this.passphrase.getBytes(), "AES");
 
@@ -77,10 +74,10 @@ public class AES256 {
 	    kgen.init(128); // 192 and 256 bits may not be available
 
 	    // Generate the secret key specs.
-	    SecretKey skey = kgen.generateKey();
-	    byte[] raw = skey.getEncoded();
+	    //SecretKey skey = kgen.generateKey();
+	    //byte[] raw = skey.getEncoded();
 
-	    String key = new String(raw);
+	    //String key = new String(raw);
 	    //System.out.println(key);
 	    SecretKeySpec skeySpec = new SecretKeySpec(this.passphrase.getBytes(), "AES");
 
@@ -132,7 +129,7 @@ public class AES256 {
 	  }
 	  return data;
   }
-
+/*
   public static void main(String[] args) throws Exception {
 
 	  AES256 b = new AES256("passpasspasspass");
@@ -143,4 +140,5 @@ public class AES256 {
 	  System.out.println(decrypt);
 	  
   }
+  */
 }

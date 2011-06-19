@@ -33,6 +33,11 @@ import org.vincentsaluzzo.lightrpc.common.security.TripleDES;
 public class LightRPCServlet extends HttpServlet {
 
 	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 2138423905531766584L;
+
+	/**
 	 * Configuration object for the server handler
 	 */
 	LightRPCConfig configuration;
@@ -460,7 +465,6 @@ public class LightRPCServlet extends HttpServlet {
 	@Override
 	protected void doPost(HttpServletRequest req, HttpServletResponse resp)
 			throws ServletException, IOException {
-		// TODO Auto-generated method stub
 		//super.doPost(req, resp);
 		
 		resp.setContentType("text/html");
@@ -484,10 +488,9 @@ public class LightRPCServlet extends HttpServlet {
 		        } else if(responseParameter.getClass() == String[].class) {
 		        	lightrpcResponse = new LightRPCResponse(lightrpcRequest.getMethodName(), "GoodResponse", (String[])responseParameter);
 		        } else if(responseParameter.getClass() == String.class) {
-		        	ArrayList<Object> paramResponse = new ArrayList<Object>();
 		        	lightrpcResponse = new LightRPCResponse(lightrpcRequest.getMethodName(), "GoodResponse", new String[]{(String) responseParameter});
 		        } else if(responseParameter.getClass() == ArrayList.class) {
-		        	ArrayList<Object> paramResponse = (ArrayList<Object>) responseParameter;
+		        	ArrayList<Object> paramResponse = (ArrayList) responseParameter;
 		        	lightrpcResponse = new LightRPCResponse(lightrpcRequest.getMethodName(), "GoodResponse", paramResponse);
 		        } else if(responseParameter.getClass() == LightRPCException.class) {
 		        	lightrpcResponse = new LightRPCResponse(lightrpcRequest.getMethodName(), "Exception", new String[]{"This method doesn't exist"});
@@ -509,9 +512,9 @@ public class LightRPCServlet extends HttpServlet {
 			}
 		}
 	}
-	
+	/*
 	public static void main(String[] args) throws Exception {
-		/*
+		
 		final class test {
 			
 			public void sayHello() {
@@ -586,6 +589,7 @@ public class LightRPCServlet extends HttpServlet {
 		Server server = new Server(8080);
 		Context root = new Context(server,"/",Context.SESSIONS);
 		root.addServlet(new ServletHolder(a), "/*");
-		server.start();*/
+		server.start();
 	}
+*/
 }

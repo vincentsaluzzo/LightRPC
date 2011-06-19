@@ -1,10 +1,7 @@
 package org.vincentsaluzzo.lightrpc.common.security;
 
-import java.security.*;
-
 import javax.crypto.*;
 import javax.crypto.spec.*;
-import java.io.*;
 
 /**
 * This class provides crypt/decrypt method to encrypt and decrypt a string with a passphrase.
@@ -32,17 +29,17 @@ public class RC4 {
 	 */
 	public byte[] crypt(String pStringToCrypt) throws Exception{
 		
-		String message=pStringToCrypt;
+		//String message=pStringToCrypt;
 
 
 	    KeyGenerator kgen = KeyGenerator.getInstance("RC4");
 	    kgen.init(168); // 192 and 256 bits may not be available
 
 	    // Generate the secret key specs.
-	    SecretKey skey = kgen.generateKey();
-	    byte[] raw = skey.getEncoded();
+	    //SecretKey skey = kgen.generateKey();
+	    //byte[] raw = skey.getEncoded();
 
-	    String key = new String(raw);
+	    //String key = new String(raw);
 	    //System.out.println("Key use: " + key + " - Hex: " + asHex(raw));
 	    SecretKeySpec skeySpec = new SecretKeySpec(this.passphrase.getBytes(), "RC4");
 
@@ -77,10 +74,10 @@ public class RC4 {
 	    kgen.init(168); // 192 and 256 bits may not be available
 
 	    // Generate the secret key specs.
-	    SecretKey skey = kgen.generateKey();
-	    byte[] raw = skey.getEncoded();
+	    //SecretKey skey = kgen.generateKey();
+	    //byte[] raw = skey.getEncoded();
 
-	    String key = new String(raw);
+	    //String key = new String(raw);
 	    //System.out.println(key);
 	    SecretKeySpec skeySpec = new SecretKeySpec(this.passphrase.getBytes(), "RC4");
 
@@ -132,16 +129,17 @@ public class RC4 {
 	  }
 	  return data;
   }
-
+/*
   public static void main(String[] args) throws Exception {
 
 	  RC4 b = new RC4("123456789ABCDEFGHIJKLMNO");
-	  /*byte[] crypt = b.crypt("toto");
-	  System.out.println(new String(crypt));
-	  System.out.println(asHex(crypt));*/
+	  //byte[] crypt = b.crypt("toto");
+	  //System.out.println(new String(crypt));
+	  //System.out.println(asHex(crypt));
 	  byte[] toto = RC4.hexStringToByteArray("7CB2D1B549C2C3868978F2CAF9B2DEF892C2171DE10200223CB9E4413EA8DE6EB4E8AD367D60DD605B79D91F00713CBC03C2744B49231947601E18F0E1E3FD5EC67D9A3A8105CE9AE079C3775C44E0349AE9753F094EC006030D744489AE2065544C885709E4010A14C7D3CF21771D69ADE4");
 	  String decrypt = b.decrypt(toto);
 	  System.out.println(decrypt);
 	  
   }
+*/
 }

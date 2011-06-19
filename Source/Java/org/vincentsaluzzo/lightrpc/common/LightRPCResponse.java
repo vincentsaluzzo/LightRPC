@@ -212,7 +212,7 @@ public class LightRPCResponse {
 		}
 	}
 	
-	
+	/*
 	public static void main(String[] args) {
 		System.out.println("PARSING XML RESPONSE:");
 		try {
@@ -234,4 +234,5 @@ public class LightRPCResponse {
 		LightRPCResponse resp = new LightRPCResponse("toto", "response", new String[]{"titi","tata"});
 		System.out.println(resp.getXML());
 	}
+	*/
 }

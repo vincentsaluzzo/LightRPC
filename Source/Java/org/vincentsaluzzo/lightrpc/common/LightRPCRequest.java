@@ -196,6 +196,7 @@ public class LightRPCRequest {
 		}
 	}
 	
+	/*
 	static public void main(String[] args) {
 		System.out.println("PARSING XML REQUEST:");
 	try {
@@ -221,4 +222,5 @@ public class LightRPCRequest {
 		LightRPCRequest req = new LightRPCRequest("toto", new String[]{"titi","tata"});
 		System.out.println(req.getXML());
 	}
+	*/
 }

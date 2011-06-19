@@ -1,10 +1,7 @@
 package org.vincentsaluzzo.lightrpc.common.security;
 
-import java.security.*;
-
 import javax.crypto.*;
 import javax.crypto.spec.*;
-import java.io.*;
 
 /**
 * This class provides crypt/decrypt method to encrypt and decrypt a string with a passphrase.
@@ -32,17 +29,17 @@ public class TripleDES {
 	 */
 	public byte[] crypt(String pStringToCrypt) throws Exception{
 		
-		String message=pStringToCrypt;
+		//String message=pStringToCrypt;
 
 
 	    KeyGenerator kgen = KeyGenerator.getInstance("DESede");
 	    kgen.init(168); // 192 and 256 bits may not be available
 
 	    // Generate the secret key specs.
-	    SecretKey skey = kgen.generateKey();
-	    byte[] raw = skey.getEncoded();
+	    //SecretKey skey = kgen.generateKey();
+	    //byte[] raw = skey.getEncoded();
 
-	    String key = new String(raw);
+	    //String key = new String(raw);
 	    //System.out.println("Key use: " + key + " - Hex: " + asHex(raw));
 	    SecretKeySpec skeySpec = new SecretKeySpec(this.passphrase.getBytes(), "DESede");
 
@@ -77,10 +74,10 @@ public class TripleDES {
 	    kgen.init(168); // 192 and 256 bits may not be available
 
 	    // Generate the secret key specs.
-	    SecretKey skey = kgen.generateKey();
-	    byte[] raw = skey.getEncoded();
+	    //SecretKey skey = kgen.generateKey();
+	    //byte[] raw = skey.getEncoded();
 
-	    String key = new String(raw);
+	    //String key = new String(raw);
 	    //System.out.println(key);
 	    SecretKeySpec skeySpec = new SecretKeySpec(this.passphrase.getBytes(), "DESede");
 
@@ -132,7 +129,7 @@ public class TripleDES {
 	  }
 	  return data;
   }
-
+/*
   public static void main(String[] args) throws Exception {
 
 	  TripleDES b = new TripleDES("123456789ABCDEFGHIJKLMNO");
@@ -143,4 +140,5 @@ public class TripleDES {
 	  System.out.println(decrypt);
 	  
   }
+  */
 }

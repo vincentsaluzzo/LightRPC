@@ -9,7 +9,6 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.StringReader;
 import java.io.StringWriter;
-import java.lang.reflect.Method;
 import java.util.ArrayList;
 
 import javax.servlet.ServletException;
@@ -22,7 +21,6 @@ import org.jdom.input.SAXBuilder;
 import org.jdom.output.Format;
 import org.jdom.output.XMLOutputter;
 import org.mortbay.jetty.Request;
-import org.mortbay.jetty.Server;
 import org.mortbay.jetty.handler.AbstractHandler;
 import org.vincentsaluzzo.lightrpc.common.LightRPCConfig;
 import org.vincentsaluzzo.lightrpc.common.LightRPCException;
@@ -31,9 +29,6 @@ import org.vincentsaluzzo.lightrpc.common.LightRPCResponse;
 import org.vincentsaluzzo.lightrpc.common.security.AES256;
 import org.vincentsaluzzo.lightrpc.common.security.TripleDES;
 import org.vincentsaluzzo.lightrpc.common.security.Blowfish;
-
-import sun.misc.IOUtils;
-
 
 /**
  * This abstract class must be overridden to use this. 
@@ -277,7 +272,7 @@ public abstract class LightRPCHandler extends AbstractHandler {
 	 * @return a list of parameter to return in a response to the client
 	 */
 	abstract public Object[] doMethod(String pName, ArrayList<Object> pParameter);
-	
+	/*
 	public static void main(String[] args) throws Exception {
 		Server server = new Server(8080);
 		
@@ -308,4 +303,5 @@ public abstract class LightRPCHandler extends AbstractHandler {
 		server.setHandler(new myHandler(c));
 		server.start();
 	}
+	*/
 }

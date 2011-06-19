@@ -1,7 +1,6 @@
 package org.vincentsaluzzo.lightrpc.client;
 
 import java.io.BufferedReader;
-import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.io.StringReader;
@@ -242,6 +241,7 @@ public class LightRPCClient {
 		return lastResponse;
 	}
 	
+	/*
 	public static void main(String[] args) throws IOException {
 		
 		LightRPCConfig c = new LightRPCConfig("http://localhost:8080");
@@ -256,7 +256,7 @@ public class LightRPCClient {
 			e.printStackTrace();
 		}
 		
-	}
+	}*/
 	
 	
 }
